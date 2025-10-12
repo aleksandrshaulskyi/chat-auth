@@ -1,0 +1,1 @@
+from infrastructure.dependencies.auth import get_request_user
