@@ -1,1 +1,1 @@
-from infrastructure.dependencies.auth import get_request_user
+from infrastructure.dependencies.authentication import get_access_token, get_request_user

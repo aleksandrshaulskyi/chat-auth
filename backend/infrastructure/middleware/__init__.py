@@ -1,0 +1,1 @@
+from infrastructure.middleware.main import setup_middleware

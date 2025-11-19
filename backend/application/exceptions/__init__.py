@@ -1,10 +1,10 @@
 from application.exceptions.exceptions import (
+    ApplicationException,
     AuthenticationException,
-    DataIntegrityException,
+    ChatsServerUnavailable,
     FileExtensionException,
     FileSizeException,
-    InvalidJWTException,
-    InvalidPasswordException,
+    SessionDoesNotExistException,
     UserAlreadyExistsException,
     UserNotFoundException,
 )

@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 
 
@@ -17,6 +17,10 @@ class Session:
     def is_ongoing(self) -> bool:
         return datetime.now() < self.valid_through
     
+    @property
+    def representation(self) -> dict:
+        return asdict(self)
+
     def prolong(self, access_token: str, refresh_token: str) -> None:
         self.access_token = access_token
         self.refresh_token = refresh_token

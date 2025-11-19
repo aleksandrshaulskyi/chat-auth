@@ -1,40 +1,81 @@
-from application.exceptions import DataIntegrityException, UserAlreadyExistsException
+from application.exceptions import UserAlreadyExistsException
 from application.ports import DatabaseUnitOfWorkPort, DefaultHasherPort, UserRepositoryPort
 from domain.entities.user import User
 
 
 class CreateUserUseCase:
+    """
+    This use case is responsible for creating users.
+    """
 
     def __init__(
-            self,
-            user_data: dict,
-            default_hasher: DefaultHasherPort,
-            database_repo: UserRepositoryPort,
-            database_uow: DatabaseUnitOfWorkPort,
-        ) -> None:
+        self,
+        user_data: dict,
+        default_hasher: DefaultHasherPort,
+        database_repo: UserRepositoryPort,
+        database_uow: DatabaseUnitOfWorkPort,
+    ) -> None:
+        """
+        Initialize the use case.
+
+        Args:
+            user_data (dict): Raw data required to create a user.
+            default_hasher (DefaultHasherPort): Service used for hashing user credentials.
+            database_repo (UserRepositoryPort): Repository responsible for persisting user records.
+            database_uow (DatabaseUnitOfWorkPort): Unit of Work ensuring atomic database operations.
+        """
         self.user_data = user_data
         self.default_hasher = default_hasher
         self.database_repo = database_repo
         self.database_uow = database_uow
 
-    async def execute(self) -> dict:
-        raw_password = self.user_data.get('password')
+    async def get_and_hash_password(self) -> str:
+        """
+        Retrieve the inputed password from the user data and hash it.
+        """
+        return await self.default_hasher.hash(self.user_data.get('password'))
+    
+    async def validate(self) -> None:
+        """
+        Validates the incoming data.
 
-        hashed_password = await self.default_hasher.hash(raw_password)
+        Raises:
+            UserAlreadyExistsException: Raisen if a user with the provided data already exists.
+        """
+        username = self.user_data.get('username')
 
-        user = User(**self.user_data)
-        user.set_password(hashed_password=hashed_password)
+        if await self.database_repo.check_if_exists({'username': username}):
+            raise UserAlreadyExistsException(
+                title='User already exists.',
+                details={'username': 'A user with such username already exists.'},
+            )
+        
+        email = self.user_data.get('email')
+   
+        if await self.database_repo.check_if_exists({'email': email}):
+            raise UserAlreadyExistsException(
+                title='User already exists.',
+                details={'email': 'A user with such email already exists.'},
+            )
 
-        user_data = user.repr_without_none()
+    async def execute(self) -> dict | None:
+        """
+        Create a user.
 
-        try:
-            user_model_dict = await self.database_repo.create(user_data=user_data)
-        except UserAlreadyExistsException as exception:
-            constraint_field_name = await exception.get_constraint_field_name()
-            exception_details = {
-                'details': {constraint_field_name: f'A user with such {constraint_field_name} has been already registered.'},
-            }
-            raise DataIntegrityException(details=exception_details)
+        - Validate the incoming data.
+        - Create an instance of a User entity.
+        - Set hashed password.
+        - Create a User in database.
+
+        Returns:
+            dict: A representation of a User from the database if provided data is valid.
+        """
+        await self.validate()
+
+        user = User.create(self.user_data)
+        user.set_password(hashed_password=await self.get_and_hash_password())
+
+        user_model_dict = await self.database_repo.create(user_data=user.representation)
 
         await self.database_uow.commit()
 

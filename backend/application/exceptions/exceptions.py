@@ -1,47 +1,51 @@
-class AuthenticationException(Exception):
-    'An exception that should be risen if something goes wrong while authentication process.'
-
-    def __init__(self, details: dict | None = None) -> None:
-        self.title = 'Authentication error'
-        self.details = details
+from domain.exceptions import BaseException
 
 
-class DataIntegrityException(Exception):
-    'An exception that should be risen if something goes wrong with data integrity.'
-
-    def __init__(self, details: dict | None = None, constraint_name: str | None = None) -> None:
-        self.title = 'Data integrity error'
-        self.details = details
-        self.constraint_name = constraint_name
-
-    async def get_constraint_field_name(self) -> str:
-        if self.constraint_name is None:
-            return ''
-        try:
-            return self.constraint_name.split('_')[1]
-        except IndexError:
-            return ''
+class ApplicationException(BaseException):
+    """
+    This is the base exception for all of the exceptions that can be raisen
+    on the application layer.
+    """
 
 
-class UserNotFoundException(DataIntegrityException):
-    'An exception risen if a user was not found.'
+class AuthenticationException(ApplicationException):
+    """
+    Should be raisen if an error occurs while authenticating a user.
+    """
 
 
-class UserAlreadyExistsException(DataIntegrityException):
-    'An exception risen if a user with provided credentials already exists.'
+class SessionDoesNotExistException(ApplicationException):
+    """
+    Should be raisen if the is no ongoing session exists for the requesting user.
+    """
 
 
-class InvalidPasswordException(AuthenticationException):
-    'An exception risen if password is invalid.'
+class UserAlreadyExistsException(ApplicationException):
+    """
+    Should be raisen if a user with such data (username and email) already exists.
+    """
 
 
-class InvalidJWTException(AuthenticationException):
-    'An exception risen if token is invalid.'
+class UserNotFoundException(ApplicationException):
+    """
+    Should be raisen if a user with the provided filters was not found.
+    """
 
 
-class FileSizeException(DataIntegrityException):
-    'An exception risen if a file size exceeds the allowed limit.'
+class ChatsServerUnavailable(ApplicationException):
+    """
+    Should be raisen if there was no response from the server that
+    is responsible for updating chats.
+    """
 
 
-class FileExtensionException(DataIntegrityException):
-    'An exception risen if a file extension is not allowed.'
+class FileSizeException(ApplicationException):
+    """
+    Should be raisen if the file size exceeds the limit.
+    """
+
+
+class FileExtensionException(ApplicationException):
+    """
+    Should be raisen if provided file extension is not supported.
+    """

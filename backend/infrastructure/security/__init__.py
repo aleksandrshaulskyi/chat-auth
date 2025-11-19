@@ -1,2 +1,2 @@
 from infrastructure.security.default_hasher import DefaultHasher
-from infrastructure.security.jwt_token_provider import JWTTokenProvider
+from infrastructure.security.jwt_manager import JWTManager

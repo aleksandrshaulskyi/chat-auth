@@ -1,4 +1,3 @@
-from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from pydantic import Field
@@ -10,6 +9,7 @@ class Settings(BaseSettings):
     current_domain: str = 'http://localhost'
     min_username_length: int = 4
     min_password_length: int = 8
+    messaging_backend_url: str = 'http://messaging_backend:8002'
     #SECURITY
     key: str = Field(validation_alias='KEY')
     algorithm: str = Field(validation_alias='ALGORITHM')
@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     display_media_root: str = 'media'
     allowed_extensions: set = {'.jpg', '.jpeg', '.png'}
     max_size: int = 2097152
+    #GRPC
+    grpc_address: str = Field(validation_alias='GRPC_ADDRESS')
 
     model_config = {
         'env_file': '.env',

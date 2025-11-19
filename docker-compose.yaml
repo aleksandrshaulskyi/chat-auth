@@ -1,18 +1,15 @@
-version: '3.8'
-
 services:
-  database:
-    container_name: database
+  postgresql:
+    container_name: postgresql
     image: postgres:16-alpine
     expose:
       - '5432'
     env_file: ./backend/.env
     volumes:
       - data:/var/lib/postgresql/data
+    restart: unless-stopped
     networks:
       - chat-network
-    restart: unless-stopped
-
   backend:
     container_name: auth_backend
     build:
@@ -23,42 +20,17 @@ services:
     env_file: ./backend/.env
     volumes:
       - ./backend:/application
-    networks:
-      - chat-network
     restart: unless-stopped
     command: sh -c 'alembic upgrade head && uvicorn main:application --host 0.0.0.0 --port 8000 --reload'
-
-  nginx:
-    container_name: nginx
-    image: nginx:1.27-alpine
-    ports:
-      - '80:80'
-    env_file: ./backend/.env
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./backend/media:/srv/media:ro
     networks:
       - chat-network
-    restart: unless-stopped
     depends_on:
-      - backend
-
-  redis:
-    container_name: redis
-    image: redis:7.2
-    expose:
-      - '6379'
-    command: 'redis-server --save --appendonly no'
-    networks:
-      - chat-network
-    restart: unless-stopped
-    depends_on:
-      - backend
-
-volumes:
-  data:
+      - postgresql
 
 networks:
   chat-network:
     driver: bridge
     external: true
+
+volumes:
+  data:

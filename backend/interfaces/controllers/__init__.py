@@ -1,7 +1,0 @@
-from interfaces.controllers.create_session import CreateSessionController
-from interfaces.controllers.create_user import CreateUserController
-from interfaces.controllers.refresh_session import RefreshSessionController
-from interfaces.controllers.terminate_all_sessions import TerminateAllSessionsController
-from interfaces.controllers.terminate_session import TerminateSessionController
-from interfaces.controllers.update_avatar import UpdateAvatarController
-from interfaces.controllers.update_user import UpdateUserController

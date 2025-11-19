@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 
-from domain.entities.user import User
-
 
 class UserRepositoryPort(ABC):
 
@@ -10,11 +8,15 @@ class UserRepositoryPort(ABC):
         ...
 
     @abstractmethod
-    async def get_by_username(self, username: str) -> dict | None:
+    async def check_if_exists(self, properties: dict) -> bool:
         ...
 
     @abstractmethod
-    async def get_by_id(self, id: int) -> dict | None:
+    async def get_by_properties(self, properties: dict) -> dict | None:
+        ...
+
+    @abstractmethod
+    async def get_by_ids(self, ids: list) -> list:
         ...
 
     @abstractmethod
@@ -23,4 +25,8 @@ class UserRepositoryPort(ABC):
 
     @abstractmethod
     async def update_avatar(self, avatar_url: str) -> None:
+        ...
+
+    @abstractmethod
+    async def search_users_by_username(self, username: str, user_username: str) -> list:
         ...
