@@ -19,7 +19,7 @@ class UpdateChatRelatedUser(UpdateChatRelatedUserPort):
         """
         Initialize the service.
         """
-        self.url = f'{settings.messaging_backend_url}/storage/chats/update-chat-related-user'
+        self.url = f'{settings.messaging_backend_url}/messaging/chats/update-chat-related-user'
 
     @on_exception(
         expo,
