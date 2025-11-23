@@ -27,8 +27,8 @@ class Settings(BaseSettings):
     display_media_root: str = 'media'
     allowed_extensions: set = {'.jpg', '.jpeg', '.png'}
     max_size: int = 2097152
-    #GRPC
-    grpc_address: str = Field(validation_alias='GRPC_ADDRESS')
+    #METRICS
+    opentelemetry_collector_url: str = Field(validation_alias='OPENTELEMETRY_COLLECTOR_URL')
 
     model_config = {
         'env_file': '.env',
