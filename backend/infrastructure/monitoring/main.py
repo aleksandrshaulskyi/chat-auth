@@ -26,7 +26,7 @@ def setup_metrics(application: FastAPI) -> None:
 
     provider = MeterProvider(
         metric_readers=[metrics_reader],
-        resource=Resource.create({'service.name': 'chat_authentication'})
+        resource=Resource.create({'service_name': 'chat_authentication'})
     )
 
     metrics.set_meter_provider(provider)

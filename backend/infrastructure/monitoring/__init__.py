@@ -1,1 +1,1 @@
-from infrastructure.monitoring.metrics import setup_metrics
+from infrastructure.monitoring.main import setup_metrics
