@@ -21,7 +21,7 @@ services:
     volumes:
       - ./backend:/application
     restart: unless-stopped
-    command: sh -c 'alembic upgrade head && python -u -m uvicorn main:application --host 0.0.0.0 --port 8000'
+    command: sh -c 'alembic upgrade head && uvicorn main:application --host 0.0.0.0 --port 8000 --reload'
     networks:
       - chat-network
     depends_on:

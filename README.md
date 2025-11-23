@@ -42,7 +42,8 @@ It consists of 4 layers which are:
 
 ## Recent updates.
 
-None yet released.
+24.11.2025 | Added the basic monitoring of the vital performance indicators. Added small fixes.
+Pull request: https://github.com/aleksandrshaulskyi/chat-auth/compare/main...monitoring
 
 ## Docs.
 
