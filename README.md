@@ -43,7 +43,7 @@ It consists of 4 layers which are:
 ## Recent updates.
 
 24.11.2025 | Added the basic monitoring of the vital performance indicators. Added small fixes.
-Pull request: https://github.com/aleksandrshaulskyi/chat-auth/compare/main...monitoring
+Pull request: https://github.com/aleksandrshaulskyi/chat-auth/pull/1
 
 ## Docs.
 
