@@ -42,17 +42,23 @@ It consists of 4 layers which are:
 
 ## Recent updates.
 
-**24.11.2025**   
-** Major **  
+**24.11.2025**
+
+**Major**
+
 Added the monitoring of some vital metrics such as:
 1) The amount of the requests per second.
 2) Latency for 95% and 99% of requests.
 3) The amount of the requests that were responded with 4xx or 5xx status codes.  
 
-This was implemented using the popular monitoring stack of Opentelemetry | Prometheus | Grafana.  
-**More information here:** https://github.com/aleksandrshaulskyi/chat-monitoring. 
-** Minor **  
-Added small fixes.  
+This was implemented using the popular monitoring stack of **Opentelemetry** | **Prometheus** | **Grafana**.
+
+**More information here:** https://github.com/aleksandrshaulskyi/chat-monitoring.
+
+**Minor**
+
+Added small fixes.
+
 **Pull request:** https://github.com/aleksandrshaulskyi/chat-auth/pull/1
 
 ## Docs.
