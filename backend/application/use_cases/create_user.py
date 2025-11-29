@@ -1,3 +1,7 @@
+from logging import getLogger
+
+from settings import settings
+
 from application.exceptions import UserAlreadyExistsException
 from application.ports import DatabaseUnitOfWorkPort, DefaultHasherPort, UserRepositoryPort
 from domain.entities.user import User
@@ -28,6 +32,7 @@ class CreateUserUseCase:
         self.default_hasher = default_hasher
         self.database_repo = database_repo
         self.database_uow = database_uow
+        self.logger = getLogger(settings.users_logger_name)
 
     async def get_and_hash_password(self) -> str:
         """
@@ -45,6 +50,10 @@ class CreateUserUseCase:
         username = self.user_data.get('username')
 
         if await self.database_repo.check_if_exists({'username': username}):
+            self.logger.error(
+                'An attempt to create a user with the existing username.',
+                extra={'user_id': None, 'event_type': 'Existing username.'}
+            )
             raise UserAlreadyExistsException(
                 title='User already exists.',
                 details={'username': 'A user with such username already exists.'},
@@ -53,6 +62,10 @@ class CreateUserUseCase:
         email = self.user_data.get('email')
    
         if await self.database_repo.check_if_exists({'email': email}):
+            self.logger.error(
+                'An attempt to create a user with the existing email.',
+                extra={'user_id': None, 'event_type': 'Existing email.'}
+            )
             raise UserAlreadyExistsException(
                 title='User already exists.',
                 details={'email': 'A user with such email already exists.'},

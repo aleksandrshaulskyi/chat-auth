@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     max_size: int = 2097152
     #METRICS
     opentelemetry_collector_url: str = Field(validation_alias='OPENTELEMETRY_COLLECTOR_URL')
+    #LOGGING
+    sessions_logger_name: str = 'application.sessions'
+    users_logger_name: str = 'application.users'
 
     model_config = {
         'env_file': '.env',

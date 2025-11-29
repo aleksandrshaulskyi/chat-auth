@@ -1,3 +1,7 @@
+from logging import getLogger
+
+from settings import settings
+
 from application.exceptions import UserAlreadyExistsException, UserNotFoundException
 from application.outgoing_dtos import OutgoingUserDTO
 from application.ports import DatabaseUnitOfWorkPort, UpdateChatRelatedUserPort, UserRepositoryPort
@@ -29,6 +33,7 @@ class UpdateUserUseCase:
         self.database_repo = database_repo
         self.database_uow = database_uow
         self.http_service = http_service
+        self.logger = getLogger(settings.users_logger_name)
 
     async def validate(self) -> None:
         """
@@ -40,6 +45,10 @@ class UpdateUserUseCase:
             UserAlreadyExistsException: Raisen if a user with the provided data already exist.
         """
         if (username := self.user_data.get('username')) is not None:
+            self.logger.error(
+                'An attempt to update a user info with the existing username.',
+                extra={'user_id': self.user_id, 'event_type': 'Update user with existing username.'}
+            )
             if await self.database_repo.check_if_exists({'username': username}):
                 raise UserAlreadyExistsException(
                     title='User already exists.',
@@ -48,6 +57,10 @@ class UpdateUserUseCase:
             
         if (email := self.user_data.get('email')) is not None:
             if await self.database_repo.check_if_exists({'email': email}):
+                self.logger.error(
+                    'An attempt to update a user info with the existing email.',
+                    extra={'user_id': self.user_id, 'event_type': 'Update user with existing email.'}
+                )
                 raise UserAlreadyExistsException(
                     title='User already exists.',
                     details={'email': 'A user with such email already exists.'},
@@ -75,6 +88,12 @@ class UpdateUserUseCase:
             if await self.http_service.execute(access_token=access_token, user_data=outgoing_user.representation):
                 await self.database_uow.commit()
                 return user_data
+
+        self.logger.error(
+            'A user with the provided id was not found.',
+            extra={'user_id': self.user_id, 'event_type': 'Invalid user during the user info update.'}
+        )
+
         raise UserNotFoundException(
             title='User was not found.',
             details={'User was not found.': 'A user with the provided id does not exist.'}

@@ -1,3 +1,7 @@
+from logging import getLogger
+
+from settings import settings
+
 from application.exceptions import AuthenticationException
 from application.ports import DatabaseUnitOfWorkPort, JWTManagerPort, SessionRepositoryPort
 from domain.entities import Session
@@ -30,6 +34,7 @@ class RefreshSessionUseCase:
         self.database_uow = database_uow
         self.session = None
         self.user_id = None
+        self.logger = getLogger(settings.sessions_logger_name)
 
     async def execute(self) -> dict | None:
         """
@@ -54,6 +59,11 @@ class RefreshSessionUseCase:
 
         if not self.session.terminated:
             return self.session.representation
+        
+        self.logger.error(
+            'An attempt to refresh session with the expired refresh token.',
+            extra={'user_id': self.user_id, 'event_type': 'Expired refresh token.'},
+        )
         raise AuthenticationException(
             title='Authentication exception.',
             details={'Authentication exception.': 'The provided refresh token expired.'},
@@ -85,6 +95,10 @@ class RefreshSessionUseCase:
         if (session_data := await self.session_database_repo.get_session(filters=filters)) is not None:
             self.session = Session(**session_data)
         else:
+            self.logger.error(
+                'A session with the provided refresh token does not exist.',
+                extra={'user_id': self.user_id, 'event_type': 'Session does not exist.'},
+            )
             raise AuthenticationException(
                 title='Authentication exception.',
                 details={'Authentication exception.': 'No active session found for such refresh token.'},
