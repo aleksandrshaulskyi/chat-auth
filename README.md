@@ -1,67 +1,65 @@
-# Chat-auth.
+Chat-Logging
 
-The authentication microservice for the distributed chat system.
+Logging microservice for the distributed chat system
 
-## Brief.
+Overview
 
-This microservice is generally responsible for everything that is related to
-authentication process. The authentication is based on the stateless approach
-using JSON web tokens. That said, we utilize both full advantage of the stateless
-tokens and it's main disadvantage - unability to revoke an issued token immediately.
+This microservice provides centralized logging via the classic ELK stack (Elasticsearch, Logstash, Kibana), with Filebeat used as the log shipper.
 
-## Stage.
-This service is in the stage of active development. Updates are released multiple times a week.
+It includes pre-built Kibana dashboards with both list-style log views and graphical visualizations.
+All dashboards are located in the /kibana_dashboards/ directory and can be imported directly into Kibana.
 
-## Features.
-This microservice operates with the two domain entities:
+Note: In ~90% of practical cases I would choose a modern, lightweight stack like OpenTelemetry + Prometheus + Grafana + Loki.
+It’s simpler, more lightweight, and you'll likely use Prometheus/Grafana for metrics anyway.
 
-1) Session
-2) User
+Development Stage
 
-Thus it provides all that is required to work with them.
+Active development.
+Updates are released several times a week.
 
-1) Create/Refresh/Terminate sessions.
-2) CRU (Deleting is not yet released) operations with User.
+Features
 
-## Architecture.
+Centralized logging for all services in the distributed chat system
 
-This microservice is built using the Clean Architecture approach.
-It consists of 4 layers which are:
+Pre-built Kibana dashboards
 
-1) Domain (entities, value objects)
-2) Application layer (domain entities orchestration and business logic)
-3) Interface adapters (thin transport layer that incapsulates the internal logic)
-4) Infrastructure (frameworks, databases, etc.)
+Filebeat-based log transportation
 
-## Usage.
+Fully containerized environment
 
-1) Clone the repository.
-2) Create .env file in the backed directory using the env_example.txt as an example.
-3) ```docker-compose up --build``` in the directory where docker-compose.yaml file is located.
-4) The application will be available on **http://localhost:8000**
+Usage
+1. Clone the repository
+git clone <your-repo-url>
 
-## Recent updates.
+2. Create an .env file
 
-**29.11.2025**
+Use env_example.txt located in the backend directory.
+You can simply copy it as-is — it contains no project-specific secrets.
 
-**Major**
+3. Run the stack
+docker-compose up --build
 
-Added the logging.
+4. Open Kibana
 
-This was implemented using the popular monitoring stack of **Filebeat** | **Logstash** | **Elasticsearch** | **Kibana**.
+Kibana will be available at:
 
-**More information here:** https://github.com/aleksandrshaulskyi/chat-logging.
+http://localhost:5601
 
-**Minor**
+Dashboards
 
-Added small fixes.
+All dashboards are located in:
 
-**Pull request:** https://github.com/aleksandrshaulskyi/chat-auth/pull/2
+/kibana_dashboards/
 
-## Docs.
 
-Available at the standard FastAPI docs endpoint **http://localhost:8000/docs**
+You can import them through Kibana → Stack Management → Saved Objects → Import.
 
-## Back to Index repository of the whole chat system.
+Recent Updates
+
+No released updates yet.
+
+Root Repository
+
+The index repository for the entire distributed chat system:
 
 https://github.com/aleksandrshaulskyi/chat-index
