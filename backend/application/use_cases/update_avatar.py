@@ -1,3 +1,5 @@
+from logging import getLogger
+
 from settings import settings
 
 from application.exceptions import FileExtensionException, FileSizeException, UserNotFoundException
@@ -42,6 +44,7 @@ class UpdateAvatarUseCase:
         self.database_repo = database_repo
         self.database_uow = database_uow
         self.http_service = http_service
+        self.logger = getLogger(settings.users_logger_name)
 
     def validate(self) -> None:
         """
@@ -52,12 +55,20 @@ class UpdateAvatarUseCase:
             FileSizeException: If the file's size exceeds the limit.
         """
         if self.extension not in settings.allowed_extensions:
+            self.logger.error(
+                'An attempt to upload file with the wrong extension.',
+                extra={'user_id': self.user_id, 'event_type': 'Wrong extension.'}
+            )
             raise FileExtensionException(
                 title='File extension exception.',
                 details={'File extension exception.': 'This extension is not supported.'},
             )
         
         if len(self.avatar) > settings.max_size:
+            self.logger.error(
+                'An attempt to upload a file that is too large.',
+                extra={'user_id': self.user_id, 'event_type': 'File is too large.'}
+            )
             raise FileSizeException(
                 title='File size exception.',
                 details={'File size exception.': 'The file size exceeded the allowed file size.'},
@@ -95,6 +106,10 @@ class UpdateAvatarUseCase:
                 await self.database_uow.commit()
                 return {'avatar_url': full_avatar_url}
         await self.file_storage.delete(path=full_avatar_url)
+        self.logger.error(
+            'A user with the provided id was not found.',
+            extra={'user_id': self.user_id, 'event_type': 'Invalid user during avatar update.'}
+        )
         raise UserNotFoundException(
             title='User was not found.',
             details={'User was not found.': 'A user matching the provided id does not exist.'},

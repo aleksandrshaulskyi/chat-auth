@@ -1,3 +1,7 @@
+from logging import getLogger
+
+from settings import settings
+
 from application.exceptions import SessionDoesNotExistException
 from application.ports import DatabaseUnitOfWorkPort, SessionRepositoryPort
 from domain.entities import Session
@@ -24,6 +28,7 @@ class TerminateSessionUseCase:
         self.database_repo = database_repo
         self.database_uow = database_uow
         self.session = None
+        self.logger = getLogger(settings.sessions_logger_name)
 
     async def execute(self) -> None:
         """
@@ -65,6 +70,10 @@ class TerminateSessionUseCase:
             if session.is_ongoing:
                 self.session = session
         else:
+            self.logger.error(
+                'The user does not have any active sessions for the provided user agent..',
+                extra={'user_id': self.user_id, 'event_type': 'No active sessions of user with such user-agent.'},
+            )
             raise SessionDoesNotExistException(
                     title='Session does not exist.',
                     details={'Session does not exist..': 'There is no active session for the user-agent.'},

@@ -1,3 +1,7 @@
+from logging import getLogger
+
+from settings import settings
+
 from application.exceptions import AuthenticationException
 from application.ports import (
     DatabaseUnitOfWorkPort,
@@ -41,6 +45,7 @@ class CreateSessionUseCase:
         self.jwt_manager = jwt_manager
         self.database_uow = database_uow
         self.user_id = None
+        self.logger = getLogger(settings.sessions_logger_name)
 
     async def execute(self) -> dict:
         await self.check_and_get_user_id()
@@ -74,12 +79,22 @@ class CreateSessionUseCase:
         if (user_data := await self.user_database_repo.get_by_properties({'username': username})) is not None:
             password_is_correct = await self.default_hasher.verify(value=password, hash=user_data.get('password'))
 
+            self.logger.error(
+                'Attempt to log with the wrong password.',
+                extra={'user_id': user_data.get('id'), 'event_type': 'Wrong password'},
+            )
+
             if not password_is_correct:
                 raise AuthenticationException(title='Authentication exception.', details=exception_details)
 
             self.user_id = user_data.get('id')
 
         else:
+            self.logger.error(
+                'Attempt to log in with the wrong username.',
+                extra={'user_id': None, 'event_type': 'Wrong username'},
+            )
+
             raise AuthenticationException(title='Authentication exception.', details=exception_details)
 
     async def get_and_terminate_sessions(self) -> None:

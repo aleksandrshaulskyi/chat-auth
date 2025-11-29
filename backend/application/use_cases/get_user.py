@@ -1,3 +1,7 @@
+from logging import getLogger
+
+from settings import settings
+
 from application.exceptions import UserNotFoundException
 from application.ports import JWTManagerPort, UserRepositoryPort
 
@@ -24,6 +28,7 @@ class GetUserUseCase:
         self.user_id = user_id
         self.database_repo = database_repo
         self.jwt_manager = jwt_manager
+        self.logger = getLogger(settings.users_logger_name)
 
     async def execute(self) -> dict | None:
         """
@@ -34,6 +39,12 @@ class GetUserUseCase:
         """
         if (user_data := await self.database_repo.get_by_properties({'id': self.user_id})) is not None:
             return user_data
+
+        self.logger.error(
+            'A user with the provided id was not found.',
+            extra={'user_id': self.user_id, 'event_type': 'User not found.'}
+        )
+
         raise UserNotFoundException(
             title='User was not found.',
             details={'User was not found.': 'A user matching provided data does not exist.'}
