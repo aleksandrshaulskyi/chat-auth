@@ -16,7 +16,7 @@ class AuthenticationException(ApplicationException):
 
 class SessionDoesNotExistException(ApplicationException):
     """
-    Should be raisen if the is no ongoing session exists for the requesting user.
+    Should be raisen if there is no ongoing session exists for the requesting user.
     """
 
 

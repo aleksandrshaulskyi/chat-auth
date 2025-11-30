@@ -47,7 +47,7 @@ class UpdateUserUseCase:
         if (username := self.user_data.get('username')) is not None:
             self.logger.error(
                 'An attempt to update a user info with the existing username.',
-                extra={'user_id': self.user_id, 'event_type': 'Update user with existing username.'}
+                extra={'user_id': self.user_data.get('user_id'), 'event_type': 'Update user with existing username.'}
             )
             if await self.database_repo.check_if_exists({'username': username}):
                 raise UserAlreadyExistsException(
@@ -59,7 +59,7 @@ class UpdateUserUseCase:
             if await self.database_repo.check_if_exists({'email': email}):
                 self.logger.error(
                     'An attempt to update a user info with the existing email.',
-                    extra={'user_id': self.user_id, 'event_type': 'Update user with existing email.'}
+                    extra={'user_id': self.user_data.get('user_id'), 'event_type': 'Update user with existing email.'}
                 )
                 raise UserAlreadyExistsException(
                     title='User already exists.',
@@ -78,7 +78,7 @@ class UpdateUserUseCase:
         access_token = self.user_data.pop('access_token')
 
         user_data = await self.database_repo.update_user(
-            user_id=self.user_data.get('user_id'),
+            user_id=self.user_data.pop('user_id'),
             user_data=self.user_data,
         )
 

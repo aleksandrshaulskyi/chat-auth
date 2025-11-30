@@ -1,8 +1,9 @@
-from sqlalchemy import exists, inspect, select
+from sqlalchemy import exists, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.ports.user import UserRepositoryPort
 from infrastructure.database.models import UserModel
+from infrastructure.exceptions import InvalidDatabaseFilters
 from infrastructure.internal_dtos import InternalUserDTO
 
 
@@ -31,15 +32,13 @@ class UserRepository(UserRepositoryPort):
         Returns:
             dict: Serialized user DTO.
         """
-        user_model = UserModel(**user_data)
+        statement = insert(UserModel).values(**user_data).returning(*UserModel.__table__.columns)
 
-        self.session.add(user_model)
+        result = await self.session.execute(statement=statement)
+        row = result.mappings().one()
 
-        await self.session.flush()
-        await self.session.refresh(user_model)
+        return InternalUserDTO.model_validate(row).model_dump()
 
-        return InternalUserDTO.model_validate(user_model).model_dump()
-    
     async def check_if_exists(self, properties: dict) -> bool:
         """
         Check whether a user exists matching given properties.
@@ -50,22 +49,24 @@ class UserRepository(UserRepositoryPort):
         Returns:
             bool: True if a matching user exists.
         """
-        conditions = []
         supported_properties = {
-            'id': UserModel.id,
-            'email': UserModel.email,
-            'username': UserModel.username,
+            'id': UserModel.__table__.columns.id,
+            'email': UserModel.__table__.columns.email,
+            'username': UserModel.__table__.columns.username,
         }
 
-        for property, value in properties.items():
-            column = supported_properties.get(property)
+        try:
+            conditions = {supported_properties[property] == value for property, value in properties.items()}
+        except KeyError:
+            raise InvalidDatabaseFilters(
+                title='Invalid filters provided.',
+                details={
+                    'Invalid filters provided.': 'The invalid filters were provided to the database repository.',
+                },
+            )
 
-            if column is None:
-                raise ValueError
-            conditions.append(column == value)
-
-        query = select(exists().where(*conditions))
-        result = (await self.session.execute(query)).scalar()
+        statement = select(exists().where(*conditions))
+        result = (await self.session.execute(statement=statement)).scalar_one()
         return result
 
     async def get_by_properties(self, properties: dict) -> dict | None:
@@ -78,25 +79,27 @@ class UserRepository(UserRepositoryPort):
         Returns:
             dict | None: User DTO or None if not found.
         """
-        conditions = []
         supported_properties = {
-            'id': UserModel.id,
-            'email': UserModel.email,
-            'username': UserModel.username,
+            'id': UserModel.__table__.columns.id,
+            'email': UserModel.__table__.columns.email,
+            'username': UserModel.__table__.columns.username,
         }
 
-        for property, value in properties.items():
-            column = supported_properties.get(property)
+        try:
+            conditions = {supported_properties[property] == value for property, value in properties.items()}
+        except KeyError:
+            raise InvalidDatabaseFilters(
+                title='Invalid filters provided.',
+                details={
+                    'Invalid filters provided.': 'The invalid filters were provided to the database repository.',
+                },
+            )
 
-            if column is None:
-                raise ValueError
-            conditions.append(column == value)
+        statement = select(UserModel.__table__).where(*conditions)
+        result = await self.session.execute(statement=statement)
 
-        query = select(UserModel).where(*conditions)
-        result = await self.session.execute(query)
-
-        if (user_model := result.scalar_one_or_none()) is not None:
-            return InternalUserDTO.model_validate(user_model).model_dump()
+        if (row := result.mappings().one_or_none()) is not None:
+            return InternalUserDTO.model_validate(row).model_dump()
         return None
     
     async def get_by_ids(self, ids: list) -> list:
@@ -109,11 +112,11 @@ class UserRepository(UserRepositoryPort):
         Returns:
             list: List of user DTOs.
         """
-        query = select(UserModel).where(UserModel.id.in_(ids))
-        result = await self.session.execute(query)
+        statement = select(UserModel.__table__).where(UserModel.__table__.columns.id.in_(ids))
+        result = await self.session.execute(statement=statement)
 
-        if (user_models := result.scalars().all()):
-            return [InternalUserDTO.model_validate(user_model).model_dump() for user_model in user_models]
+        if (rows := result.mappings().all()):
+            return [InternalUserDTO.model_validate(row).model_dump() for row in rows]
         return []
 
     async def update_user(self, user_id: int, user_data: dict) -> dict | None:
@@ -127,17 +130,20 @@ class UserRepository(UserRepositoryPort):
         Returns:
             dict | None: Updated user DTO or None if not found.
         """
-        if (user_model := await self.session.get(UserModel, user_id)) is not None:
-            properties = {prop.key for prop in inspect(UserModel).mapper.column_attrs}
+        statement = update(
+            UserModel.__table__,
+        ).where(
+            UserModel.__table__.columns.id == user_id,
+        ).values(
+            **user_data,
+        ).returning(
+            *UserModel.__table__.columns,
+        )
 
-            for key, value in user_data.items():
-                if key in properties:
-                    setattr(user_model, key, value)
+        result = await self.session.execute(statement=statement)
 
-            await self.session.flush()
-            await self.session.refresh(user_model)
-
-            return InternalUserDTO.model_validate(user_model).model_dump()
+        if (row := result.mappings().one_or_none()) is not None:
+            return InternalUserDTO.model_validate(row).model_dump()
         return None
 
     async def update_avatar(self, user_id: int, avatar_url: str) -> dict | None:
@@ -151,15 +157,19 @@ class UserRepository(UserRepositoryPort):
         Returns:
             dict | None: Updated user DTO or None if not found.
         """
-        user_model = await self.session.get(UserModel, user_id)
+        statement = update(
+            UserModel.__table__,
+        ).where(
+            UserModel.__table__.columns.id == user_id,
+        ).values(
+            {'avatar_url': avatar_url},
+        ).returning(
+            *UserModel.__table__.columns,
+        )
 
-        if user_model is not None:
-            user_model.avatar_url = avatar_url
-
-            await self.session.flush()
-            await self.session.refresh(user_model)
-
-            return InternalUserDTO.model_validate(user_model).model_dump()
+        result = await self.session.execute(statement=statement)
+        if (row := result.mappings().one_or_none()) is not None:
+            return InternalUserDTO.model_validate(row).model_dump()
         return None
 
     async def search_users_by_username(self, username: str, user_username: str) -> list:
@@ -173,12 +183,15 @@ class UserRepository(UserRepositoryPort):
         Returns:
             list: List of user DTOs.
         """
-        query = select(UserModel).where(
-            UserModel.username.contains(username) &
-            ~(UserModel.username == user_username)
+        statement = select(
+            UserModel.__table__,
+        ).where(
+            UserModel.__table__.columns.username.contains(username) & 
+            ~(UserModel.__table__.columns.username == user_username),
         )
-        result = await self.session.execute(query)
 
-        if (user_models := result.scalars().all()):
-            return [InternalUserDTO.model_validate(user_model).model_dump() for user_model in user_models]
+        result = await self.session.execute(statement=statement)
+
+        if (rows := result.mappings().all()):
+            return [InternalUserDTO.model_validate(row).model_dump() for row in rows]
         return []
