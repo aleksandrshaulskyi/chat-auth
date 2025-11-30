@@ -113,10 +113,8 @@ class CreateSessionUseCase:
         sessions_data = await self.session_database_repo.get_sessions(filters)
 
         if sessions_data:
-            sessions = [Session(**session_data) for session_data in sessions_data]
-            for session in sessions:
-                session.terminate()
-                await self.session_database_repo.update_session(session_id=session.id, data=session.representation)
+            session_ids = {session.get('id') for session in sessions_data}
+            await self.session_database_repo.terminate_sessions(ids=session_ids)
 
     async def create_new_session(self) -> Session:
         """
@@ -128,6 +126,4 @@ class CreateSessionUseCase:
         new_session_data = {'user_id': self.user_id, 'user_agent': self.session_data.get('user_agent'), **token_pair}
         created_session_data = await self.session_database_repo.create_session(data=new_session_data)
 
-        session = Session(**created_session_data)
-
-        return session
+        return Session(**created_session_data)

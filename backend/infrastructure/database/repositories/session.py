@@ -1,5 +1,5 @@
-from sqlalchemy import inspect, select
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy import insert, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.ports import SessionRepositoryPort
 from infrastructure.database.models import SessionModel
@@ -12,12 +12,12 @@ class SessionRepository(SessionRepositoryPort):
     related to sessions.
     """
 
-    def __init__(self, session: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(self, session: AsyncSession) -> None:
         """
         Initialize the repository.
 
         Args:
-            session (async_sessionmaker[AsyncSession]): An instance of a session.
+            session (AsyncSession): An instance of a session.
         """
         self.session = session
 
@@ -31,14 +31,12 @@ class SessionRepository(SessionRepositoryPort):
         Returns:
             dict: Serialized session DTO.
         """
-        session_model = SessionModel(**data)
+        statement = insert(SessionModel).values(**data).returning(*SessionModel.__table__.columns)
 
-        self.session.add(session_model)
+        result = await self.session.execute(statement=statement)
+        row = result.mappings().one()
 
-        await self.session.flush()
-        await self.session.refresh(session_model)
-
-        return InternalSessionDTO.model_validate(session_model).model_dump()
+        return InternalSessionDTO.model_validate(row).model_dump()
     
     async def get_session(self, filters: dict) -> dict | None:
         """
@@ -50,11 +48,11 @@ class SessionRepository(SessionRepositoryPort):
         Returns:
             dict | None: Session DTO or None if not found.
         """
-        query = select(SessionModel).filter_by(**filters)
-        result = await self.session.execute(query)
+        statement = select(SessionModel.__table__).filter_by(**filters)
+        result = await self.session.execute(statement=statement)
 
-        if (session_model := result.scalar_one_or_none()) is not None:
-            return InternalSessionDTO.model_validate(session_model).model_dump()
+        if (row := result.mappings().one_or_none()) is not None:
+            return InternalSessionDTO.model_validate(row).model_dump()
         
         return None
     
@@ -68,11 +66,12 @@ class SessionRepository(SessionRepositoryPort):
         Returns:
             list[dict] | None: List of session DTOs or None if empty.
         """
-        query = select(SessionModel).filter_by(**filters)
-        result = await self.session.execute(query)
+        statement = select(SessionModel.__table__).filter_by(**filters)
+        result = await self.session.execute(statement=statement)
 
-        if (session_models := result.unique().scalars().all()):
-            return [InternalSessionDTO.model_validate(session_model).model_dump() for session_model in session_models]
+        if (rows := result.mappings().all()):
+            return [InternalSessionDTO.model_validate(row).model_dump() for row in rows]
+        return None
 
     async def update_session(self, session_id: int, data: dict) -> dict | None:
         """
@@ -85,16 +84,35 @@ class SessionRepository(SessionRepositoryPort):
         Returns:
             dict | None: Updated session DTO or None if not found.
         """
-        if (session_model := await self.session.get(SessionModel, session_id)) is not None:
-            properties = {prop.key for prop in inspect(SessionModel).mapper.column_attrs}
+        statement = update(
+            SessionModel.__table__,
+        ).where(
+            SessionModel.__table__.columns.id == session_id,
+        ).values(
+            **data,
+        ).returning(
+            *SessionModel.__table__.columns,
+        )
 
-            for key, value in data.items():
-                if key in properties:
-                    setattr(session_model, key, value)
+        result = await self.session.execute(statement=statement)
 
-            await self.session.flush()
-            await self.session.refresh(session_model)
-
-            return InternalSessionDTO.model_validate(session_model).model_dump()
-        
+        if (row := result.mappings().one_or_none()) is not None:
+            return InternalSessionDTO.model_validate(row).model_dump()
         return None
+    
+    async def terminate_sessions(self, ids: set) -> None:
+        """
+        Terminate sessions with provided ids.
+
+        Args:
+            ids (set): A set of ids of the sessions that need to be terminated.
+        """
+        statement = update(
+            SessionModel.__table__,
+        ).where(
+            SessionModel.__table__.columns.id.in_(ids),
+        ).values(
+            {'terminated': True},
+        )
+
+        await self.session.execute(statement=statement)

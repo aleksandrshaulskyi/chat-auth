@@ -88,7 +88,9 @@ class CreateUserUseCase:
         user = User.create(self.user_data)
         user.set_password(hashed_password=await self.get_and_hash_password())
 
-        user_model_dict = await self.database_repo.create(user_data=user.representation)
+        user_data = {key: value for key, value in user.representation.items() if value is not None}
+
+        user_model_dict = await self.database_repo.create(user_data=user_data)
 
         await self.database_uow.commit()
 

@@ -18,3 +18,7 @@ class SessionRepositoryPort(ABC):
     @abstractmethod
     async def update_session(self, session_id: int, data: dict) -> dict | None:
         ...
+
+    @abstractmethod
+    async def terminate_sessions(self, ids: set) -> None:
+        ...
