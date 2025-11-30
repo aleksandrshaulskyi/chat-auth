@@ -54,8 +54,6 @@ Optimized few queries and use cases accordingly.
 Small logging bug fix.
 Small exception handling improvements.
 
-**Pull request:** https://github.com/aleksandrshaulskyi/chat-auth/pull/2
-
 ## Docs.
 
 Available at the standard FastAPI docs endpoint **http://localhost:8000/docs**
