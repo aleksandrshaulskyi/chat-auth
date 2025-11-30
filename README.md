@@ -42,19 +42,17 @@ It consists of 4 layers which are:
 
 ## Recent updates.
 
-**29.11.2025**
+**30.11.2025**
 
 **Major**
 
-Added the logging.
-
-This was implemented using the popular monitoring stack of **Filebeat** | **Logstash** | **Elasticsearch** | **Kibana**.
-
-**More information here:** https://github.com/aleksandrshaulskyi/chat-logging.
+Rewrote database repositories using SQLAlchemy 2.x core style.
+Optimized few queries and use cases accordingly.
 
 **Minor**
 
-Added small fixes.
+Small logging bug fix.
+Small exception handling improvements.
 
 **Pull request:** https://github.com/aleksandrshaulskyi/chat-auth/pull/2
 
