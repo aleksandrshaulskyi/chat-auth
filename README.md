@@ -1,29 +1,40 @@
 # Chat-auth.
 
-The authentication microservice for the distributed chat system.
+Authentication and session management for the distributed chat platform
 
-## Brief.
+The authentication microservice responsible for issuing, validating, refreshing, and managing stateless JWT-based sessions across the entire chat system.
 
-This microservice is generally responsible for everything that is related to
-authentication process. The authentication is based on the stateless approach
-using JSON web tokens. That said, we utilize both full advantage of the stateless
-tokens and it's main disadvantage - unability to revoke an issued token immediately.
+## 🚀 Overview
 
-## Stage.
-This service is in the stage of active development. Updates are released multiple times a week.
+Chat-auth handles all authentication workflows for the platform using a clean, stateless JWT approach.
+It issues access tokens, refreshes them, and manages user sessions — while staying lightweight, fast, and isolated from other services.
 
-## Features.
-This microservice operates with the two domain entities:
+The system embraces the benefits of JWT (simplicity, speed, no server-side storage) while also acknowledging their primary drawback:
+already issued tokens cannot be instantly revoked.
 
-1) Session
-2) User
+To balance this, Chat-auth maintains session objects and provides structured workflows for issuing, refreshing, and terminating sessions.
 
-Thus it provides all that is required to work with them.
+The service operates with two domain entities:
 
-1) Create/Refresh/Terminate sessions.
-2) CRU (Deleting is not yet released) operations with User.
+- **User**
 
-## Architecture.
+- **Session**
+
+Everything related to authentication flows and user identity management lives here.
+
+## 🧩 Features
+
+**Create / Refresh / Terminate sessions**  
+Full session lifecycle built around stateless JWT.
+
+**User management (CRU)**  
+Create, read, and update users.
+(Delete operation is planned but not yet released.)
+
+**Strict separation of responsibilities**  
+Authentication concerns are isolated here — no mixing with transport or messaging layers.
+
+## 🏗️ Architecture.
 
 This microservice is built using the Clean Architecture approach.
 It consists of 4 layers which are:
@@ -33,31 +44,18 @@ It consists of 4 layers which are:
 3) Interface adapters (thin transport layer that incapsulates the internal logic)
 4) Infrastructure (frameworks, databases, etc.)
 
-## Usage.
+## ⚙️ Usage.
 
 1) Clone the repository.
 2) Create .env file in the backed directory using the env_example.txt as an example.
 3) ```docker-compose up --build``` in the directory where docker-compose.yaml file is located.
 4) The application will be available on **http://localhost:8000**
 
-## Recent updates.
-
-**30.11.2025**
-
-**Major**
-
-Rewrote database repositories using SQLAlchemy 2.x core style.
-Optimized few queries and use cases accordingly.
-
-**Minor**
-
-Small logging bug fix.
-Small exception handling improvements.
-
-## Docs.
+## 📘 Docs.
 
 Available at the standard FastAPI docs endpoint **http://localhost:8000/docs**
 
-## Back to Index repository of the whole chat system.
+## 🔗 Back to the Main Index Repository
 
+Explore the complete distributed chat system:
 https://github.com/aleksandrshaulskyi/chat-index
